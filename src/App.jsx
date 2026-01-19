@@ -1,0 +1,359 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { AlarmClock, Volume2, Skull, Zap, Share2, RefreshCw } from 'lucide-react';
+
+// --- GAME CONFIGURATION & LEVELS ---
+
+const randomNumber1 = Math.floor(Math.random() * 10 + 1);
+const randomNumber2 = Math.floor(Math.random() * 10 + 1);
+
+const LEVELS = [
+  {
+    id: 1,
+    prompt: "Type 'OFF' to silence me.",
+    placeholder: "OFF",
+    validate: (input) => input.trim().toUpperCase() === "OFF"
+  },
+  {
+    id: 2,
+    prompt: "I need energy. Type a fruit.",
+    placeholder: "e.g., Apple, Banana...",
+    validate: (input) => {
+      const fruits = ["apple", "banana", "orange", "grape", "mango", "strawberry", "pineapple", "pear", "kiwi", "peach", "cherry"];
+      return fruits.includes(input.trim().toLowerCase());
+    }
+  },
+  {
+    id: 3,
+    prompt: `Quick math. What is ${randomNumber1} + ${randomNumber2}?`,
+    placeholder: "?",
+    validate: (input) => input.trim() === `${randomNumber1 + randomNumber2}`
+  },
+  {
+    id: 4,
+    prompt: "Type a color that does NOT contain the letter 'e'.",
+    placeholder: "Think hard...",
+    validate: (input) => {
+      const val = input.trim().toLowerCase();
+      const validColors = ["black", "pink", "gray", "cyan", "gold", "brown", "maroon", "lilac", "indigo"];
+      return validColors.includes(val) && !val.includes('e');
+    }
+  },
+  {
+    id: 5,
+    prompt: "I only speak German now. Say 'Good Morning'.",
+    placeholder: "German...",
+    validate: (input) => input.trim().toLowerCase() === "guten morgen"
+  },
+  {
+    id: 6,
+    prompt: "Complete the shout: Fus Ro ___",
+    placeholder: "Skyrim...",
+    validate: (input) => input.trim().toLowerCase() === "dah"
+  },
+  {
+    id: 7,
+    prompt: "Declare a C integer variable named 'x' equal to 10.",
+    placeholder: "syntax matters...",
+    validate: (input) => {
+      // Allow minor spacing variations
+      return /^int\s+x\s*=\s*10;$/.test(input.trim());
+    }
+  },
+  {
+    id: 8,
+    prompt: "Type the current time exactly (HH:MM).",
+    placeholder: "Look at your clock...",
+    validate: (input) => {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      return input.trim() === `${hours}:${minutes}`;
+    }
+  },
+  {
+    id: 9,
+    prompt: "Type the alphabet backwards.",
+    placeholder: "zyx...",
+    validate: (input) => input.trim().toLowerCase() === "zyxwvutsrqponmlkjihgfedcba"
+  }
+];
+
+// Fallback for endless mode if they beat level 9
+const INFINITE_LEVEL = {
+  id: 999,
+  prompt: "JUST TYPE 'PLEASE' TO SLEEP!",
+  placeholder: "BEG",
+  validate: (input) => input.trim().toLowerCase() === "please"
+};
+
+const SHAKE_ANIMATION = `
+  @keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+  }
+  .shake-screen {
+    animation: shake 0.5s;
+    animation-iteration-count: infinite;
+  }
+`;
+
+const roundDuration = 60000; // 1 minute
+const wrongAnswerPenalty = 20; // in %
+
+export default function Just5MoreMinutes() {
+  // Game State
+    const [gameState, setGameState] = useState('start'); // start, playing, snoozed, gameover
+    const [levelIndex, setLevelIndex] = useState(0);
+    const [noise, setNoise] = useState(0);
+    const [inputVal, setInputVal] = useState("");
+    const [shake, setShake] = useState(false);
+    const [flashError, setFlashError] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const inputRef = useRef(null);
+    const interval = useRef(null);
+    const startTime = useRef(Date.now());
+
+  // Focus input automatically
+  useEffect(() => {
+    if (gameState === 'playing' && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [gameState, flashError]);
+
+  // Game Loop (Noise Meter)
+    useEffect(() => {
+        if (gameState === 'playing') {
+        startTime.current = Date.now();
+
+        interval.current = setInterval(() => {
+            let elapsedTime = Date.now() - startTime.current;
+            let percentageOfMinute = (elapsedTime / roundDuration) * 100;
+            setNoise(() => {
+                if (percentageOfMinute >= 100) {
+                    setGameState('gameover');
+                    return 100;
+                }
+                return percentageOfMinute;
+            });
+        }, 50);
+        }
+        return () => clearInterval(interval.current);
+    }, [gameState, levelIndex]);
+
+  // Shake Trigger
+    useEffect(() => {
+        if (noise > 80 && gameState === 'playing') {
+            setShake(true);
+        } 
+        else {
+            setShake(false);
+        }
+    }, [noise, gameState]);
+
+    // Handlers
+    const startGame = () => {
+        setLevelIndex(0);
+        setNoise(0);
+        setInputVal("");
+        setGameState('playing');
+    };
+
+    const handleInput = (e) => {
+        setInputVal(e.target.value);
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (gameState !== 'playing') return;
+
+        const currentLevelObj = LEVELS[levelIndex] || INFINITE_LEVEL;
+        const isCorrect = currentLevelObj.validate(inputVal);
+
+        if (isCorrect) {
+            // Success Logic
+            setGameState('snoozed');
+            // "Sleep" for 1 second then wake up
+            setTimeout(() => {
+                setNoise(0);
+                setInputVal("");
+                setLevelIndex((prev) => prev + 1);
+                setGameState('playing');
+            }, 2000);
+        } 
+        else {
+            // Failure Logic
+            startTime.current -= (wrongAnswerPenalty/100) * roundDuration; // Penalty
+            setFlashError(true);
+            setInputVal("");
+            setTimeout(() => setFlashError(false), 200);
+        }
+    };
+
+    const copyScore = () => {
+        const text = `I survived ${levelIndex} alarms in #Just5MoreMinutes ⏰💀. Can you sleep in?`;
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    // --- RENDER HELPERS ---
+
+    const getMeterColor = () => {
+        if (noise < 50) return 'bg-green-500';
+        if (noise < 80) return 'bg-yellow-500';
+        return 'bg-red-600';
+    };
+
+    // --- SCREENS ---
+
+    if (gameState === 'start') {
+        return (
+        <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4 font-mono">
+            <AlarmClock className="w-24 h-24 mb-6 text-red-500 animate-bounce" />
+            <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center tracking-tighter">Just 5 More Minutes</h1>
+            <p className="text-slate-400 mb-8 text-center max-w-md">
+                Your AI Alarm Clock is sentient. It demands answers. <br />
+                Type correctly to snooze. <br />
+                <span className="text-red-400 font-bold">Don't let the noise meter hit 100%.</span>
+            </p>
+            <button 
+                onClick={startGame}
+                className="bg-white text-slate-900 px-8 py-4 text-xl font-bold rounded hover:bg-slate-200 transition-colors flex items-center gap-2"
+            >
+            <Volume2 className="w-6 h-6" /> WAKE UP
+            </button>
+        </div>
+        );
+    }
+
+    if (gameState === 'snoozed') {
+        return (
+        <div className="min-h-screen bg-black flex items-center justify-center text-white font-mono">
+            <div className="text-center animate-pulse">
+                <p className="text-2xl italic text-slate-500">...zzzz...</p>
+                <p className="text-sm text-slate-700 mt-2">snoozing for 2 seconds</p>
+            </div>
+        </div>
+        );
+    }
+
+    if (gameState === 'gameover') {
+        return (
+        <div className="min-h-screen bg-red-950 text-white flex flex-col items-center justify-center p-4 font-mono border-8 border-red-600">
+            <Skull className="w-32 h-32 mb-6 text-white animate-pulse" />
+            <h2 className="text-5xl font-black mb-2 uppercase tracking-widest text-center">WAKE UP!</h2>
+            <p className="text-xl mb-6 text-red-200 text-center">The neighbor broke through the wall.</p>
+            
+            <div className="bg-slate-900 p-6 rounded-lg mb-8 text-center border border-slate-700 w-full max-w-md">
+                <p className="text-slate-400 uppercase text-sm mb-1">Score</p>
+                <p className="text-3xl font-bold text-yellow-400">Survived {levelIndex} Alarms</p>
+            </div>
+
+            <div className="flex flex-col gap-4 w-full max-w-md">
+                <button 
+                    onClick={copyScore}
+                    className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 px-6 rounded font-bold flex items-center justify-center gap-2 transition-all"
+                >
+                    {copied ? "COPIED!" : <> <Share2 className="w-5 h-5" /> SHARE SCORE </>}
+                </button>
+                
+                <button 
+                    onClick={startGame}
+                    className="w-full bg-white text-black py-3 px-6 rounded font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all"
+                >
+                    <RefreshCw className="w-5 h-5" /> TRY AGAIN
+                </button>
+            </div>
+        </div>
+        );
+    }
+
+    // PLAYING STATE
+    const currentLevel = LEVELS[levelIndex] || INFINITE_LEVEL;
+
+    return (
+        <div className={`min-h-screen bg-slate-900 text-white flex flex-col font-mono overflow-hidden relative ${shake ? 'shake-screen' : ''}`}>
+        <style>{SHAKE_ANIMATION}</style>
+
+        {/* --- HUD --- */}
+        <div className="absolute top-0 left-0 w-full h-2 bg-slate-800 z-50">
+            <div 
+            className={`h-full transition-all duration-100 ease-linear ${getMeterColor()}`}
+            style={{ width: `${noise}%` }}
+            />
+        </div>
+
+        <div className="flex justify-between p-4 text-base text-slate-500 uppercase tracking-widest">
+            <span>Level {levelIndex + 1}</span>
+            <span className={`${noise > 80 ? 'text-red-500 font-bold' : ''}`}>Noise: {Math.floor(noise)}%</span>
+        </div>
+
+        {/* --- MAIN GAME CONTENT --- */}
+        <div className="flex-1 flex flex-col items-center justify-center p-4 max-w-2xl mx-auto w-full z-10">
+            
+            {/* Alarm Visual */}
+            <div className={`mb-8 relative rounded-full p-8 border-4 ${noise > 80 ? 'border-red-500 bg-red-900/20' : 'border-slate-700 bg-slate-800'}`}>
+            <AlarmClock className={`w-24 h-24 ${noise > 50 ? 'animate-ping' : ''} text-white`} />
+            {noise > 80 && (
+                <div className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded animate-bounce">
+                CRITICAL
+                </div>
+            )}
+            </div>
+
+            {/* Prompt */}
+            <div className="mb-8 text-center space-y-2">
+            <p className="text-slate-400 text-sm uppercase tracking-widest">Alarm Demand</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
+                {currentLevel.prompt}
+            </h2>
+            </div>
+
+            {/* Input Area */}
+            <form onSubmit={handleSubmit} className="w-full relative">
+                <div className={`absolute inset-0 bg-red-500 blur opacity-20 transition-opacity ${flashError ? 'opacity-40' : 'opacity-0'} pointer-events-none`}></div>
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputVal}
+                    onChange={handleInput}
+                    placeholder={currentLevel.placeholder}
+                    className={`
+                        w-full bg-slate-950 border-2 text-center text-xl md:text-2xl py-6 px-4 rounded shadow-2xl outline-none transition-all
+                        ${flashError ? 'border-red-500 text-red-500' : 'border-slate-600 focus:border-white text-white'}
+                    `}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck="false"
+                />
+                <button 
+                    type="submit"
+                    className="mt-4 w-full bg-slate-100 hover:bg-white text-slate-900 font-black py-4 rounded text-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 cursor-pointer"
+                >
+                    <Zap className="w-5 h-5 fill-slate-900" /> SNOOZE
+                </button>
+            </form>
+
+            {/* Hints/Flavor */}
+            <div className="mt-8 text-center opacity-50 text-xs">
+            <p>Penalty for wrong answer: +{wrongAnswerPenalty}% Noise</p>
+            </div>
+        </div>
+        
+        {/* Visual Noise Overlay when critical */}
+        {noise > 80 && (
+            <div className="absolute inset-0 pointer-events-none bg-red-500 mix-blend-overlay opacity-20 z-0"></div>
+        )}
+        </div>
+    );
+}
