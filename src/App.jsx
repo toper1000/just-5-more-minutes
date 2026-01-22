@@ -3,78 +3,186 @@ import { AlarmClock, Volume2, Skull, Zap, Share2, RefreshCw } from 'lucide-react
 
 // --- GAME CONFIGURATION & LEVELS ---
 
-const randomNumber1 = Math.floor(Math.random() * 10 + 1);
-const randomNumber2 = Math.floor(Math.random() * 10 + 1);
+const randomNumber1 = Math.floor(Math.random() * 400 + 100);
+const randomNumber2 = Math.floor(Math.random() * 400 + 100);
+let Fcounter = 0;
+let wasLevel8MessageDisplayed = false;
 
 const LEVELS = [
   {
     id: 1,
-    prompt: "Type 'OFF' to silence me.",
-    placeholder: "OFF",
-    validate: (input) => input.trim().toUpperCase() === "OFF"
+    prompt: "It is already 8:00, wake up!",
+    placeholder: "",
+    //validate: (input) => input.trim().toUpperCase() === "OFF",
+    validate: () => true,
+    showInput: false
   },
   {
     id: 2,
-    prompt: "I need energy. Type a fruit.",
-    placeholder: "e.g., Apple, Banana...",
-    validate: (input) => {
-      const fruits = ["apple", "banana", "orange", "grape", "mango", "strawberry", "pineapple", "pear", "kiwi", "peach", "cherry"];
-      return fruits.includes(input.trim().toLowerCase());
-    }
+    prompt: "You won't catch me! WAKE UP!",
+    placeholder: "",
+    validate: () => true,
+    showInput: false
   },
   {
     id: 3,
-    prompt: `Quick math. What is ${randomNumber1} + ${randomNumber2}?`,
-    placeholder: "?",
-    validate: (input) => input.trim() === `${randomNumber1 + randomNumber2}`
+    prompt: "Don't you understand you need to wake up? How many chromosomes do you have?",
+    placeholder: "",
+    validate: (input) => {
+        const num = input.trim().toLowerCase();
+      return (num == "47" || num == "48");
+    },
+    showInput: true
   },
   {
     id: 4,
-    prompt: "Type a color that does NOT contain the letter 'e'.",
-    placeholder: "Think hard...",
+    prompt: "If you want to sleep a little bit more, you must feed me with an emoji of fruit",
+    placeholder: "I like apples by the way :)",
     validate: (input) => {
-      const val = input.trim().toLowerCase();
-      const validColors = ["black", "pink", "gray", "cyan", "gold", "brown", "maroon", "lilac", "indigo"];
-      return validColors.includes(val) && !val.includes('e');
-    }
+        const allFruitEmojis = [
+            "🍇", "🍈", "🍉", "🍊", "🍋", "🍋‍🟩", "🍌", "🍍", "🥭", "🍎", "🍏", "🍐", "🍑", "🍒", "🍓", "🫐", 
+            "🥝", "🍅", "🫒", "🥥", "🥑", "🍆", "🌶️", "🫑", "🥒", "🌽", "🎃", "🌰"
+        ];
+      return allFruitEmojis.includes(input.trim().toLowerCase());
+    },
+    showInput: true
   },
   {
     id: 5,
-    prompt: "I only speak German now. Say 'Good Morning'.",
-    placeholder: "German...",
-    validate: (input) => input.trim().toLowerCase() === "guten morgen"
+    prompt: "Ronaldo or Messi?",
+    placeholder: "Think carefully...",
+    validate: (input) => {
+      return input.trim().toLowerCase() === "neymar";
+    },
+    showInput: true
   },
   {
     id: 6,
-    prompt: "Complete the shout: Fus Ro ___",
-    placeholder: "Skyrim...",
-    validate: (input) => input.trim().toLowerCase() === "dah"
+    prompt: `Quick math. What is ${randomNumber1} + ${randomNumber2}?`,
+    placeholder: "?",
+    validate: (input) => input.trim() === `${randomNumber1 + randomNumber2}`,
+    showInput: true
   },
   {
     id: 7,
-    prompt: "Declare a C integer variable named 'x' equal to 10.",
-    placeholder: "syntax matters...",
+    prompt: "Press 'F' to pay respects to your sleep schedule.",
+    placeholder: "",
     validate: (input) => {
-      // Allow minor spacing variations
-      return /^int\s+x\s*=\s*10;$/.test(input.trim());
-    }
+        if (input.trim().toLowerCase() !== "f") {
+            return false;
+        }
+        if (Fcounter == 19) {
+            return true;
+        }
+        else {
+            Fcounter++;
+        }
+    },
+    showInput: true
   },
-  {
-    id: 8,
-    prompt: "Type the current time exactly (HH:MM).",
-    placeholder: "Look at your clock...",
-    validate: (input) => {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      return input.trim() === `${hours}:${minutes}`;
-    }
-  },
+    {
+        id: 8,
+        prompt: "Type the name of the current day of the week.",
+        placeholder: "",
+        validate: (input) => {
+            const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+            const today = new Date().getDay(); // 0-6
+            if (wasLevel8MessageDisplayed) {
+                return true;
+            }
+            else if (input.trim().toLowerCase() !== days[today]) {
+                return false;
+            }
+            
+        },
+        showInput: true
+    },
   {
     id: 9,
-    prompt: "Type the alphabet backwards.",
-    placeholder: "zyx...",
-    validate: (input) => input.trim().toLowerCase() === "zyxwvutsrqponmlkjihgfedcba"
+    prompt: "Quick! Type 'something'. Literally.",
+    placeholder: "Do exactly as I say...",
+    validate: (input) => input.trim().toLowerCase() === "something",
+    showInput: true
+  },
+  {
+    id: 10,
+    prompt: "Finish the lyrics: 'Never gonna give you ___'",
+    placeholder: "Rick...",
+    validate: (input) => input.trim().toLowerCase() === "up",
+    showInput: true
+  },
+  {
+    id: 11,
+    prompt: "Close the tag: <div>Wake Up",
+    placeholder: "HTML...",
+    validate: (input) => input.trim().toLowerCase() === "</div>",
+    showInput: true
+  },
+  {
+    id: 12,
+    prompt: "I CAN'T HEAR YOU! (Scream 'STOP')",
+    placeholder: "USE CAPS LOCK",
+    validate: (input) => input.trim() === "STOP", // Case sensitive check
+    showInput: true
+  },
+  {
+    id: 13,
+    prompt: "What is the square root of -1?",
+    placeholder: "Imaginary...",
+    validate: (input) => {
+       const val = input.trim().toLowerCase();
+       return val === "i" || val === "j"; // Engineers use j
+    },
+    showInput: true
+  },
+  {
+    id: 14,
+    prompt: "Press 'F' to pay respects to your sleep schedule.",
+    placeholder: "F",
+    validate: (input) => input.trim().toLowerCase() === "f",
+    showInput: true
+  },
+  {
+    id: 15,
+    prompt: "Type the name of the current day of the week.",
+    placeholder: "Monday, Tuesday...",
+    validate: (input) => {
+      const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+      const today = new Date().getDay(); // 0-6
+      return input.trim().toLowerCase() === days[today];
+    },
+    showInput: true
+  },
+  {
+    id: 16,
+    prompt: "Prove you are human. What is 0 / 0?",
+    placeholder: "Math error...",
+    validate: (input) => {
+        const val = input.trim().toLowerCase();
+        return val === "undefined" || val === "error" || val === "nan";
+    },
+    showInput: true
+  },
+  {
+    id: 17,
+    prompt: "Create a password. Must contain 'z', '7', and 'cat'.",
+    placeholder: "Security first...",
+    validate: (input) => {
+        const val = input.toLowerCase();
+        return val.includes('z') && val.includes('7') && val.includes('cat');
+    },
+    showInput: true
+  },
+  {
+    id: 18,
+    prompt: "Are you awake? (Yes/No)",
+    placeholder: "Be honest...",
+    validate: (input) => {
+        const val = input.trim().toLowerCase();
+        // If they type Yes, they are awake. If they type No, they are lying (so they are awake).
+        return val === "yes" || val === "no"; 
+    },
+    showInput: true
   }
 ];
 
@@ -118,17 +226,25 @@ export default function Just5MoreMinutes() {
     const [shake, setShake] = useState(false);
     const [flashError, setFlashError] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [offset, setOffset] = useState({ x: 0, y: 0 });
+    const [dynamicPrompt, setDynamicPrompt] = useState(null);
 
     const inputRef = useRef(null);
     const interval = useRef(null);
     const startTime = useRef(Date.now());
+    const ronaldoWritten = useRef(false);
+    const messiWritten = useRef(false);
+
+    useEffect(() => {
+        setDynamicPrompt(null);
+    }, [levelIndex]);
 
   // Focus input automatically
-  useEffect(() => {
-    if (gameState === 'playing' && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [gameState, flashError]);
+    useEffect(() => {
+        if (gameState === 'playing' && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [gameState, flashError]);
 
   // Game Loop (Noise Meter)
     useEffect(() => {
@@ -160,9 +276,22 @@ export default function Just5MoreMinutes() {
         }
     }, [noise, gameState]);
 
+    const handleHover = () => {
+        if (currentLevel.id === 2) {
+            // Move the button 100px to the right (or random directions)
+            // Using a random number prevents the user from "predicting" the jump
+            const multiplier1 = (Math.random() > 0.5 ? 1 : -1);
+            const multiplier2 = (Math.random() > 0.5 ? 1 : -1);
+            const randomX = (Math.random() * 100 + 100) * multiplier1; // Random in range [-200; -100]&&[100; 200]
+            const randomY = (Math.random() * 100 + 100) * multiplier2; // Random in range [-200; -100]&&[100; 200]
+            setOffset({ x: randomX, y: randomY });
+        }
+    };
+
     // Handlers
     const startGame = () => {
-        setLevelIndex(0);
+        resetLevels();
+        setLevelIndex(7);
         setNoise(0);
         setInputVal("");
         setGameState('playing');
@@ -174,7 +303,9 @@ export default function Just5MoreMinutes() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        
         if (gameState !== 'playing') return;
+        if (LEVELS[levelIndex].id === 2) setOffset({ x: 0, y: 0 }); //setting button to place after level 2
 
         const currentLevelObj = LEVELS[levelIndex] || INFINITE_LEVEL;
         const isCorrect = currentLevelObj.validate(inputVal);
@@ -192,11 +323,67 @@ export default function Just5MoreMinutes() {
         } 
         else {
             // Failure Logic
-            startTime.current -= (wrongAnswerPenalty/100) * roundDuration; // Penalty
-            setFlashError(true);
+            handleLevels(e);
             setInputVal("");
-            setTimeout(() => setFlashError(false), 200);
+            // Penalty logic
+            if (isCorrect === false) {
+                startTime.current -= (wrongAnswerPenalty/100) * roundDuration; // Penalty (+wrongAnswerPenalty% noise)
+                setFlashError(true);
+                setTimeout(() => setFlashError(false), 200);
+            }
         }
+    };
+
+    const handleLevels = (e) => {
+        const currentLevelObj = LEVELS[levelIndex] || INFINITE_LEVEL;
+        const input = e.target.elements.inputField.value;
+        const level5NewPrompt = "Are you dumb? Everybody knows Neymar is the best";
+        const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+        const today = new Date().getDay(); // 0-6
+
+        if (currentLevelObj.id == 3 && Number(inputVal) < 47) { // level 3
+            setDynamicPrompt("I think a little more..."); 
+        }
+        else if (currentLevelObj.id == 5) {
+            if (input.trim().toLowerCase() === "ronaldo") {
+                ronaldoWritten.current = true;
+                if (messiWritten.current === true) {
+                    setDynamicPrompt(level5NewPrompt);
+                }
+            }
+            else if (input.trim().toLowerCase() === "messi") {
+                messiWritten.current = true;
+                if (ronaldoWritten.current === true) {
+                    setDynamicPrompt(level5NewPrompt);
+                }
+            }
+        } 
+        else if (currentLevelObj.id == 7) {
+            if (input.trim().toLowerCase() === "f" && Fcounter === 1) {
+                setDynamicPrompt("Again"); 
+            }
+            else if (input.trim().toLowerCase() === "f") {
+                setDynamicPrompt((prev) => prev + " and again");
+            }
+        }
+        else if (currentLevelObj.id == 8) {
+            if (input.trim().toLowerCase() === days[today]) {
+                setDynamicPrompt("WRONG"); 
+                setTimeout(() => {
+                    setDynamicPrompt("Never mind, just kidding"); 
+                    wasLevel8MessageDisplayed = true;
+                    currentLevelObj.validate();
+                }, 1000);
+            }
+        }
+    };
+
+    const resetLevels = () => {
+        setOffset({ x: 0, y: 0 }); // level 2
+        ronaldoWritten.current = false; // level 5
+        messiWritten.current = false; // level 5
+        Fcounter = 0; // level 7
+        wasLevel8MessageDisplayed = false; // level 8
     };
 
     const copyScore = () => {
@@ -241,7 +428,7 @@ export default function Just5MoreMinutes() {
         <div className="min-h-screen bg-black flex items-center justify-center text-white font-mono">
             <div className="text-center animate-pulse">
                 <p className="text-2xl italic text-slate-500">...zzzz...</p>
-                <p className="text-sm text-slate-700 mt-2">snoozing for 2 seconds</p>
+                <p className="text-sm text-slate-700 mt-2">snoozing for 5 minutes</p>
             </div>
         </div>
         );
@@ -315,30 +502,38 @@ export default function Just5MoreMinutes() {
             <div className="mb-8 text-center space-y-2">
             <p className="text-slate-400 text-sm uppercase tracking-widest">Alarm Demand</p>
             <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
-                {currentLevel.prompt}
+                {dynamicPrompt || currentLevel.prompt}
             </h2>
             </div>
 
             {/* Input Area */}
             <form onSubmit={handleSubmit} className="w-full relative">
-                <div className={`absolute inset-0 bg-red-500 blur opacity-20 transition-opacity ${flashError ? 'opacity-40' : 'opacity-0'} pointer-events-none`}></div>
-                <input
-                    ref={inputRef}
-                    type="text"
-                    value={inputVal}
-                    onChange={handleInput}
-                    placeholder={currentLevel.placeholder}
-                    className={`
-                        w-full bg-slate-950 border-2 text-center text-xl md:text-2xl py-6 px-4 rounded shadow-2xl outline-none transition-all
-                        ${flashError ? 'border-red-500 text-red-500' : 'border-slate-600 focus:border-white text-white'}
-                    `}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    spellCheck="false"
-                />
+                {currentLevel.showInput && (
+                    <>
+                        <div className={`absolute inset-0 bg-red-500 blur opacity-20 transition-opacity ${flashError ? 'opacity-40' : 'opacity-0'} pointer-events-none`}></div>
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            name='inputField'
+                            value={inputVal}
+                            onChange={handleInput}
+                            placeholder={currentLevel.placeholder}
+                            className={`
+                                w-full bg-slate-950 border-2 text-center text-xl md:text-2xl py-6 px-4 rounded shadow-2xl outline-none transition-all
+                                ${flashError ? 'border-red-500 text-red-500' : 'border-slate-600 focus:border-white text-white'}
+                            `}
+                            autoComplete="off"
+                            autoCorrect="off"
+                            spellCheck="false"
+                        />
+                    </>
+                )}
                 <button 
                     type="submit"
-                    className="mt-4 w-full bg-slate-100 hover:bg-white text-slate-900 font-black py-4 rounded text-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 cursor-pointer"
+                    onMouseEnter={handleHover}
+                    style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
+                    className={`mt-4 w-full bg-slate-100 hover:bg-white text-slate-900 font-black py-4 rounded text-xl 
+                                shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 cursor-pointer`}
                 >
                     <Zap className="w-5 h-5 fill-slate-900" /> SNOOZE
                 </button>
