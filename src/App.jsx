@@ -291,7 +291,7 @@ export default function Just5MoreMinutes() {
     // Handlers
     const startGame = () => {
         resetLevels();
-        setLevelIndex(7);
+        setLevelIndex(0);
         setNoise(0);
         setInputVal("");
         setGameState('playing');
@@ -371,8 +371,10 @@ export default function Just5MoreMinutes() {
                 setDynamicPrompt("WRONG"); 
                 setTimeout(() => {
                     setDynamicPrompt("Never mind, just kidding"); 
-                    wasLevel8MessageDisplayed = true;
-                    currentLevelObj.validate();
+                    setTimeout(() => {
+                        wasLevel8MessageDisplayed = true;
+                        handleSubmit(e);
+                    }, 1000);
                 }, 1000);
             }
         }
