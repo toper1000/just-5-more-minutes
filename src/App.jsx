@@ -2,84 +2,86 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AlarmClock, Volume2, Skull, Zap, Share2, RefreshCw } from 'lucide-react';
 
 // --- GAME CONFIGURATION & LEVELS ---
-
-const randomNumber1 = Math.floor(Math.random() * 400 + 100);
-const randomNumber2 = Math.floor(Math.random() * 400 + 100);
+const FAKE_EVENT_OBJECT  = { preventDefault: () => {} };
+const RANDOM_NUMBER_1 = Math.floor(Math.random() * 400 + 100);
+const RANDOM_NUMBER_2 = Math.floor(Math.random() * 400 + 100);
+const L9_TARGET_CLOCKS = 10; // How many clocks to catch to pass
+const L9_SPAWN_TIME = 800; // Time in ms to catch a clock before it vanishes
 let Fcounter = 0;
 let wasLevel8MessageDisplayed = false;
 
 const LEVELS = [
-  {
-    id: 1,
-    prompt: "It is already 8:00, wake up!",
-    placeholder: "",
-    //validate: (input) => input.trim().toUpperCase() === "OFF",
-    validate: () => true,
-    showInput: false
-  },
-  {
-    id: 2,
-    prompt: "You won't catch me! WAKE UP!",
-    placeholder: "",
-    validate: () => true,
-    showInput: false
-  },
-  {
-    id: 3,
-    prompt: "Don't you understand you need to wake up? How many chromosomes do you have?",
-    placeholder: "",
-    validate: (input) => {
-        const num = input.trim().toLowerCase();
-      return (num == "47" || num == "48");
+    {
+        id: 1,
+        prompt: "It is already 8:00, wake up!",
+        placeholder: "",
+        //validate: (input) => input.trim().toUpperCase() === "OFF",
+        validate: () => true,
+        showInput: false
     },
-    showInput: true
-  },
-  {
-    id: 4,
-    prompt: "If you want to sleep a little bit more, you must feed me with an emoji of fruit",
-    placeholder: "I like apples by the way :)",
-    validate: (input) => {
-        const allFruitEmojis = [
-            "🍇", "🍈", "🍉", "🍊", "🍋", "🍋‍🟩", "🍌", "🍍", "🥭", "🍎", "🍏", "🍐", "🍑", "🍒", "🍓", "🫐", 
-            "🥝", "🍅", "🫒", "🥥", "🥑", "🍆", "🌶️", "🫑", "🥒", "🌽", "🎃", "🌰"
-        ];
-      return allFruitEmojis.includes(input.trim().toLowerCase());
+    {
+        id: 2,
+        prompt: "You won't catch me! WAKE UP!",
+        placeholder: "",
+        validate: () => true,
+        showInput: false
     },
-    showInput: true
-  },
-  {
-    id: 5,
-    prompt: "Ronaldo or Messi?",
-    placeholder: "Think carefully...",
-    validate: (input) => {
-      return input.trim().toLowerCase() === "neymar";
+    {
+        id: 3,
+        prompt: "Don't you understand you need to wake up? How many chromosomes do you have?",
+        placeholder: "",
+        validate: (input) => {
+            const num = input.trim().toLowerCase();
+            return (num == "47" || num == "48");
+        },
+        showInput: true
     },
-    showInput: true
-  },
-  {
-    id: 6,
-    prompt: `Quick math. What is ${randomNumber1} + ${randomNumber2}?`,
-    placeholder: "?",
-    validate: (input) => input.trim() === `${randomNumber1 + randomNumber2}`,
-    showInput: true
-  },
-  {
-    id: 7,
-    prompt: "Press 'F' to pay respects to your sleep schedule.",
-    placeholder: "",
-    validate: (input) => {
-        if (input.trim().toLowerCase() !== "f") {
-            return false;
-        }
-        if (Fcounter == 19) {
-            return true;
-        }
-        else {
-            Fcounter++;
-        }
+    {
+        id: 4,
+        prompt: "If you want to sleep a little bit more, you must feed me with an emoji of fruit",
+        placeholder: "I like apples by the way :)",
+        validate: (input) => {
+            const allFruitEmojis = [
+                "🍇", "🍈", "🍉", "🍊", "🍋", "🍋‍🟩", "🍌", "🍍", "🥭", "🍎", "🍏", "🍐", "🍑", "🍒", "🍓", "🫐", 
+                "🥝", "🍅", "🫒", "🥥", "🥑", "🍆", "🌶️", "🫑", "🥒", "🌽", "🎃", "🌰"
+            ];
+            return allFruitEmojis.includes(input.trim().toLowerCase());
+        },
+        showInput: true
     },
-    showInput: true
-  },
+    {
+        id: 5,
+        prompt: "Ronaldo or Messi?",
+        placeholder: "Think carefully...",
+        validate: (input) => {
+            return input.trim().toLowerCase() === "neymar";
+        },
+        showInput: true
+    },
+    {
+        id: 6,
+        prompt: `Quick math. What is ${RANDOM_NUMBER_1} + ${RANDOM_NUMBER_2}?`,
+        placeholder: "?",
+        validate: (input) => input.trim() === `${RANDOM_NUMBER_1 + RANDOM_NUMBER_2}`,
+        showInput: true
+    },
+    {
+        id: 7,
+        prompt: "Press 'F' to pay respects to your sleep schedule.",
+        placeholder: "",
+        validate: (input) => {
+            if (input.trim().toLowerCase() !== "f") {
+                return false;
+            }
+            if (Fcounter == 19) {
+                return true;
+            }
+            else {
+                Fcounter++;
+            }
+        },
+        showInput: true
+    },
     {
         id: 8,
         prompt: "Type the name of the current day of the week.",
@@ -97,93 +99,93 @@ const LEVELS = [
         },
         showInput: true
     },
-  {
-    id: 9,
-    prompt: "Quick! Type 'something'. Literally.",
-    placeholder: "Do exactly as I say...",
-    validate: (input) => input.trim().toLowerCase() === "something",
-    showInput: true
-  },
-  {
-    id: 10,
-    prompt: "Finish the lyrics: 'Never gonna give you ___'",
-    placeholder: "Rick...",
-    validate: (input) => input.trim().toLowerCase() === "up",
-    showInput: true
-  },
-  {
-    id: 11,
-    prompt: "Close the tag: <div>Wake Up",
-    placeholder: "HTML...",
-    validate: (input) => input.trim().toLowerCase() === "</div>",
-    showInput: true
-  },
-  {
-    id: 12,
-    prompt: "I CAN'T HEAR YOU! (Scream 'STOP')",
-    placeholder: "USE CAPS LOCK",
-    validate: (input) => input.trim() === "STOP", // Case sensitive check
-    showInput: true
-  },
-  {
-    id: 13,
-    prompt: "What is the square root of -1?",
-    placeholder: "Imaginary...",
-    validate: (input) => {
-       const val = input.trim().toLowerCase();
-       return val === "i" || val === "j"; // Engineers use j
+    {
+        id: 9,
+        prompt: "Catch the alarms before they ring!",
+        placeholder: "", 
+        validate: () => true, 
+        showInput: false 
     },
-    showInput: true
-  },
-  {
-    id: 14,
-    prompt: "Press 'F' to pay respects to your sleep schedule.",
-    placeholder: "F",
-    validate: (input) => input.trim().toLowerCase() === "f",
-    showInput: true
-  },
-  {
-    id: 15,
-    prompt: "Type the name of the current day of the week.",
-    placeholder: "Monday, Tuesday...",
-    validate: (input) => {
-      const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-      const today = new Date().getDay(); // 0-6
-      return input.trim().toLowerCase() === days[today];
+    {
+        id: 10,
+        prompt: "Finish the lyrics: 'Never gonna give you ___'",
+        placeholder: "Rick...",
+        validate: (input) => input.trim().toLowerCase() === "up",
+        showInput: true
     },
-    showInput: true
-  },
-  {
-    id: 16,
-    prompt: "Prove you are human. What is 0 / 0?",
-    placeholder: "Math error...",
-    validate: (input) => {
+    {
+        id: 11,
+        prompt: "Close the tag: <div>Wake Up",
+        placeholder: "HTML...",
+        validate: (input) => input.trim().toLowerCase() === "</div>",
+        showInput: true
+    },
+    {
+        id: 12,
+        prompt: "I CAN'T HEAR YOU! (Scream 'STOP')",
+        placeholder: "USE CAPS LOCK",
+        validate: (input) => input.trim() === "STOP", // Case sensitive check
+        showInput: true
+    },
+    {
+        id: 13,
+        prompt: "What is the square root of -1?",
+        placeholder: "Imaginary...",
+        validate: (input) => {
         const val = input.trim().toLowerCase();
-        return val === "undefined" || val === "error" || val === "nan";
+        return val === "i" || val === "j"; // Engineers use j
+        },
+        showInput: true
     },
-    showInput: true
-  },
-  {
-    id: 17,
-    prompt: "Create a password. Must contain 'z', '7', and 'cat'.",
-    placeholder: "Security first...",
-    validate: (input) => {
-        const val = input.toLowerCase();
-        return val.includes('z') && val.includes('7') && val.includes('cat');
+    {
+        id: 14,
+        prompt: "Press 'F' to pay respects to your sleep schedule.",
+        placeholder: "F",
+        validate: (input) => input.trim().toLowerCase() === "f",
+        showInput: true
     },
-    showInput: true
-  },
-  {
-    id: 18,
-    prompt: "Are you awake? (Yes/No)",
-    placeholder: "Be honest...",
-    validate: (input) => {
-        const val = input.trim().toLowerCase();
-        // If they type Yes, they are awake. If they type No, they are lying (so they are awake).
-        return val === "yes" || val === "no"; 
+    {
+        id: 15,
+        prompt: "Type the name of the current day of the week.",
+        placeholder: "Monday, Tuesday...",
+        validate: (input) => {
+        const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+        const today = new Date().getDay(); // 0-6
+        return input.trim().toLowerCase() === days[today];
+        },
+        showInput: true
     },
-    showInput: true
-  }
+    {
+        id: 16,
+        prompt: "Prove you are human. What is 0 / 0?",
+        placeholder: "Math error...",
+        validate: (input) => {
+            const val = input.trim().toLowerCase();
+            return val === "undefined" || val === "error" || val === "nan";
+        },
+        showInput: true
+    },
+    {
+        id: 17,
+        prompt: "Create a password. Must contain 'z', '7', and 'cat'.",
+        placeholder: "Security first...",
+        validate: (input) => {
+            const val = input.toLowerCase();
+            return val.includes('z') && val.includes('7') && val.includes('cat');
+        },
+        showInput: true
+    },
+    {
+        id: 18,
+        prompt: "Are you awake? (Yes/No)",
+        placeholder: "Be honest...",
+        validate: (input) => {
+            const val = input.trim().toLowerCase();
+            // If they type Yes, they are awake. If they type No, they are lying (so they are awake).
+            return val === "yes" || val === "no"; 
+        },
+        showInput: true
+    }
 ];
 
 // Fallback for endless mode if they beat level 9
@@ -195,23 +197,41 @@ const INFINITE_LEVEL = {
 };
 
 const SHAKE_ANIMATION = `
-  @keyframes shake {
-    0% { transform: translate(1px, 1px) rotate(0deg); }
-    10% { transform: translate(-1px, -2px) rotate(-1deg); }
-    20% { transform: translate(-3px, 0px) rotate(1deg); }
-    30% { transform: translate(3px, 2px) rotate(0deg); }
-    40% { transform: translate(1px, -1px) rotate(1deg); }
-    50% { transform: translate(-1px, 2px) rotate(-1deg); }
-    60% { transform: translate(-3px, 1px) rotate(0deg); }
-    70% { transform: translate(3px, 1px) rotate(-1deg); }
-    80% { transform: translate(-1px, -1px) rotate(1deg); }
-    90% { transform: translate(1px, 2px) rotate(0deg); }
-    100% { transform: translate(1px, -2px) rotate(-1deg); }
-  }
-  .shake-screen {
-    animation: shake 0.5s;
-    animation-iteration-count: infinite;
-  }
+    @keyframes shake {
+        0% { transform: translate(1px, 1px) rotate(0deg); }
+        10% { transform: translate(-1px, -2px) rotate(-1deg); }
+        20% { transform: translate(-3px, 0px) rotate(1deg); }
+        30% { transform: translate(3px, 2px) rotate(0deg); }
+        40% { transform: translate(1px, -1px) rotate(1deg); }
+        50% { transform: translate(-1px, 2px) rotate(-1deg); }
+        60% { transform: translate(-3px, 1px) rotate(0deg); }
+        70% { transform: translate(3px, 1px) rotate(-1deg); }
+        80% { transform: translate(-1px, -1px) rotate(1deg); }
+        90% { transform: translate(1px, 2px) rotate(0deg); }
+        100% { transform: translate(1px, -2px) rotate(-1deg); }
+    }
+    .shake-screen {
+        animation: shake 0.5s;
+        animation-iteration-count: infinite;
+    }
+`;
+const CUSTOM_ANIMATIONS = `
+    @keyframes popIn {
+        0% { transform: scale(0); opacity: 0; }
+        60% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes fadeOutHit {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(1.5); opacity: 0; }
+    }
+    @keyframes fadeOutMiss {
+        0% { transform: scale(1) rotate(0deg); opacity: 1; background-color: rgba(220, 38, 38, 0.5); }
+        100% { transform: scale(0.5) rotate(45deg); opacity: 0; }
+    }
+    .clock-spawn { animation: popIn 0.3s ease-out forwards; }
+    .clock-hit { animation: fadeOutHit 0.2s ease-out forwards; }
+    .clock-miss { animation: fadeOutMiss 0.3s ease-in forwards; }
 `;
 
 const roundDuration = 60000; // 1 minute
@@ -228,6 +248,10 @@ export default function Just5MoreMinutes() {
     const [copied, setCopied] = useState(false);
     const [offset, setOffset] = useState({ x: 0, y: 0 });
     const [dynamicPrompt, setDynamicPrompt] = useState(null);
+    // --- LEVEL 9 STATE ---
+    const [l9Score, setL9Score] = useState(0);
+    const [l9ClockState, setL9ClockState] = useState(null); // { id, x, y, status: 'active'|'hit'|'miss' }
+    const l9TimerRef = useRef(null);
 
     const inputRef = useRef(null);
     const interval = useRef(null);
@@ -278,8 +302,6 @@ export default function Just5MoreMinutes() {
 
     const handleHover = () => {
         if (currentLevel.id === 2) {
-            // Move the button 100px to the right (or random directions)
-            // Using a random number prevents the user from "predicting" the jump
             const multiplier1 = (Math.random() > 0.5 ? 1 : -1);
             const multiplier2 = (Math.random() > 0.5 ? 1 : -1);
             const randomX = (Math.random() * 100 + 100) * multiplier1; // Random in range [-200; -100]&&[100; 200]
@@ -288,10 +310,32 @@ export default function Just5MoreMinutes() {
         }
     };
 
+    // level 9
+    useEffect(() => {
+        // Check if we are on Level 9 (ID 9)
+        const currentLvl = LEVELS[levelIndex];
+        let startTimer;
+        
+        if (currentLvl && currentLvl.id === 9 && gameState === 'playing') {
+            setL9Score(0);
+            setL9ClockState(null);
+            startTimer = setTimeout(() => {
+                spawnClock();
+            }, 2000);
+        }
+
+        return () => {
+            if (l9TimerRef.current) clearTimeout(l9TimerRef.current);
+            if (startTimer) clearTimeout(startTimer);
+            setL9ClockState(null);
+        };
+        // eslint-disable-next-line
+    }, [levelIndex, gameState]);
+
     // Handlers
     const startGame = () => {
         resetLevels();
-        setLevelIndex(0);
+        setLevelIndex(8);
         setNoise(0);
         setInputVal("");
         setGameState('playing');
@@ -395,6 +439,52 @@ export default function Just5MoreMinutes() {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const spawnClock = () => {
+        const id = Date.now();
+        // 5% to 90% to avoid edges, but cover the whole screen
+        const x = Math.floor(Math.random() * 85) + 5; 
+        const y = Math.floor(Math.random() * 85) + 5; 
+        
+        setL9ClockState({ id, x, y, status: 'active' });
+
+        if (l9TimerRef.current) clearTimeout(l9TimerRef.current);
+        l9TimerRef.current = setTimeout(() => {
+            handleClockMiss();
+        }, L9_SPAWN_TIME);
+    };
+
+    const handleClockClick = () => {
+        if (!l9ClockState || l9ClockState.status !== 'active') return;
+
+        if (l9TimerRef.current) clearTimeout(l9TimerRef.current);
+
+        setL9ClockState(prev => ({ ...prev, status: 'hit' }));
+        const newScore = l9Score + 1;
+        setL9Score(newScore);
+
+        // Check win condition
+        if (newScore >= L9_TARGET_CLOCKS) {
+            setTimeout(() => {
+                setL9ClockState(null);
+                handleSubmit(FAKE_EVENT_OBJECT);
+            }, 300);
+        } 
+        else {
+            setTimeout(spawnClock, 300);
+        }
+    };
+
+    const handleClockMiss = () => {
+        // Visual indication of failure
+        setL9ClockState(prev => ({ ...prev, status: 'miss' }));
+
+        startTime.current -= (wrongAnswerPenalty/100) * roundDuration; // Penalty (+wrongAnswerPenalty% noise)
+        setFlashError(true);
+        setTimeout(() => setFlashError(false), 200);
+
+        setTimeout(spawnClock, 300);
+    };
+    
     // --- RENDER HELPERS ---
 
     const getMeterColor = () => {
@@ -502,48 +592,96 @@ export default function Just5MoreMinutes() {
 
             {/* Prompt */}
             <div className="mb-8 text-center space-y-2">
-            <p className="text-slate-400 text-sm uppercase tracking-widest">Alarm Demand</p>
-            <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
-                {dynamicPrompt || currentLevel.prompt}
-            </h2>
+                <p className="text-slate-400 text-sm uppercase tracking-widest">Alarm Demand</p>
+                <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
+                    {dynamicPrompt || currentLevel.prompt}
+                </h2>
             </div>
 
             {/* Input Area */}
-            <form onSubmit={handleSubmit} className="w-full relative">
-                {currentLevel.showInput && (
-                    <>
-                        <div className={`absolute inset-0 bg-red-500 blur opacity-20 transition-opacity ${flashError ? 'opacity-40' : 'opacity-0'} pointer-events-none`}></div>
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            name='inputField'
-                            value={inputVal}
-                            onChange={handleInput}
-                            placeholder={currentLevel.placeholder}
-                            className={`
-                                w-full bg-slate-950 border-2 text-center text-xl md:text-2xl py-6 px-4 rounded shadow-2xl outline-none transition-all
-                                ${flashError ? 'border-red-500 text-red-500' : 'border-slate-600 focus:border-white text-white'}
-                            `}
-                            autoComplete="off"
-                            autoCorrect="off"
-                            spellCheck="false"
-                        />
-                    </>
-                )}
-                <button 
-                    type="submit"
-                    onMouseEnter={handleHover}
-                    style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
-                    className={`mt-4 w-full bg-slate-100 hover:bg-white text-slate-900 font-black py-4 rounded text-xl 
-                                shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 cursor-pointer`}
-                >
-                    <Zap className="w-5 h-5 fill-slate-900" /> SNOOZE
-                </button>
-            </form>
+            
+            <style>{SHAKE_ANIMATION + CUSTOM_ANIMATIONS}</style>
+
+            {/* Condition: If Level 9, show Mini Game. Else, show Standard Form */}
+            {LEVELS[levelIndex]?.id === 9 ? (
+                <>
+                    {/* Placeholder div to keep layout height stable so prompt doesn't jump */}
+                    <div className="w-full h-32"></div> 
+
+                    {/* FULL SCREEN OVERLAY */}
+                    <div className="fixed inset-0 z-40 pointer-events-none">
+                        
+                        {/* HUD for clocks caught */}
+                        <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-slate-800/80 px-4 py-2 rounded-full text-sm text-white font-bold border border-slate-600 backdrop-blur-sm">
+                            Clocks Caught: {l9Score} / {L9_TARGET_CLOCKS}
+                        </div>
+
+                        {l9ClockState && (
+                            <button
+                                type="button"
+                                onClick={handleClockClick}
+                                disabled={l9ClockState.status !== 'active'}
+                                className={`
+                                pointer-events-auto absolute p-6 rounded-full shadow-2xl transition-colors cursor-pointer border-4 border-white
+                                ${l9ClockState.status === 'active' ? 'bg-slate-100 text-slate-900 hover:bg-red-100 clock-spawn' : ''}
+                                ${l9ClockState.status === 'hit' ? 'bg-green-500 text-white border-green-300 clock-hit' : ''}
+                                ${l9ClockState.status === 'miss' ? 'bg-red-600 text-white border-red-800 clock-miss' : ''}
+                                `}
+                                style={{ 
+                                top: `${l9ClockState.y}%`, 
+                                left: `${l9ClockState.x}%`,
+                                transform: 'translate(-50%, -50%)'
+                                }}
+                            >
+                                <AlarmClock className="w-10 h-10 md:w-12 md:h-12" />
+                            </button>
+                        )}
+                        
+                        {/* Overlay instruction */}
+                        {l9Score === 0 && !l9ClockState && (
+                            <div className="absolute inset-0 flex items-center justify-center text-white/50 text-[20rem] font-black animate-pulse">
+                                READY?
+                            </div>
+                        )}
+                    </div>
+                </>
+            ) : (
+                <form onSubmit={handleSubmit} className="w-full relative">
+                    {currentLevel.showInput && (
+                        <>
+                            <div className={`absolute inset-0 bg-red-500 blur opacity-20 transition-opacity ${flashError ? 'opacity-40' : 'opacity-0'} pointer-events-none`}></div>
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                name='inputField'
+                                value={inputVal}
+                                onChange={handleInput}
+                                placeholder={currentLevel.placeholder}
+                                className={`
+                                    w-full bg-slate-950 border-2 text-center text-xl md:text-2xl py-6 px-4 rounded shadow-2xl outline-none transition-all
+                                    ${flashError ? 'border-red-500 text-red-500' : 'border-slate-600 focus:border-white text-white'}
+                                `}
+                                autoComplete="off"
+                                autoCorrect="off"
+                                spellCheck="false"
+                            />
+                        </>
+                    )}
+                    <button 
+                        type="submit"
+                        onMouseEnter={handleHover}
+                        style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
+                        className={`mt-4 w-full bg-slate-100 hover:bg-white text-slate-900 font-black py-4 rounded text-xl 
+                                    shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 cursor-pointer`}
+                    >
+                        <Zap className="w-5 h-5 fill-slate-900" /> SNOOZE
+                    </button>
+                </form>
+            )}
 
             {/* Hints/Flavor */}
             <div className="mt-8 text-center opacity-50 text-xs">
-            <p>Penalty for wrong answer: +{wrongAnswerPenalty}% Noise</p>
+                <p>Penalty for wrong answer: +{wrongAnswerPenalty}% Noise</p>
             </div>
         </div>
         
