@@ -110,9 +110,9 @@ const LEVELS = [
 	},
 	{
 		id: 11,
-		prompt: 'Close the tag: <div>Wake Up',
-		placeholder: 'HTML...',
-		validate: (input) => input.trim().toLowerCase() === '</div>',
+		prompt: 'Will you marry me?',
+		placeholder: '',
+		validate: (input) => input.trim().toLowerCase() === 'yes',
 		showInput: true,
 	},
 	{
@@ -329,7 +329,7 @@ export default function Just5MoreMinutes() {
 	// Handlers
 	const startGame = () => {
 		resetLevels();
-		setLevelIndex(0);
+		setLevelIndex(10);
 		setNoise(0);
 		setInputVal('');
 		setGameState('playing');
