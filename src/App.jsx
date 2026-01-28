@@ -7,8 +7,11 @@ const RANDOM_NUMBER_1 = Math.floor(Math.random() * 400 + 100);
 const RANDOM_NUMBER_2 = Math.floor(Math.random() * 400 + 100);
 const L9_TARGET_CLOCKS = 10; // How many clocks to catch to pass
 const L9_SPAWN_TIME = 800; // Time in ms to catch a clock before it vanishes
+const positiveAnswers = ['yes', 'yeah', 'why not', 'of course', 'yees', 'yeees']; // level 11
+const negativeAnswers = ['no', 'no way', 'never', 'not', 'nah']; // level 11
 let Fcounter = 0;
 let wasLevel8MessageDisplayed = false;
+let wasL11QuestionAsked = false;
 
 const LEVELS = [
 	{
@@ -112,7 +115,12 @@ const LEVELS = [
 		id: 11,
 		prompt: 'Will you marry me?',
 		placeholder: '',
-		validate: (input) => input.trim().toLowerCase() === 'yes',
+		isLevelPassed: false,
+		validate() {
+			if (this.isLevelPassed) {
+				return true;
+			}
+		},
 		showInput: true,
 	},
 	{
@@ -410,15 +418,44 @@ export default function Just5MoreMinutes() {
 					}, 1000);
 				}, 1000);
 			}
+		} else if (currentLevelObj.id == 11) {
+			if (negativeAnswers.includes(input.trim().toLowerCase())) {
+				if (!wasL11QuestionAsked) {
+					setDynamicPrompt("You can't do this to me! Are you sure? :(");
+					wasL11QuestionAsked = true;
+				} else if (wasL11QuestionAsked) {
+					setDynamicPrompt('You are so wierd! Answer clearly: yes or no!!!');
+					wasL11QuestionAsked = false;
+				}
+			} else if (positiveAnswers.includes(input.trim().toLowerCase())) {
+				if (!wasL11QuestionAsked) {
+					setDynamicPrompt('I LOVE YOU! You can sleep a little bit more :)');
+					setTimeout(() => {
+						LEVELS[10].isLevelPassed = true;
+						handleSubmit(FAKE_EVENT_OBJECT);
+					}, 2000);
+				} else if (wasL11QuestionAsked) {
+					setDynamicPrompt('You are so cruel! WAKE UP!');
+					setTimeout(() => {
+						startTime.current -= roundDuration; // Game over
+					}, 1500);
+				}
+			} else {
+				setDynamicPrompt('What does this mean? I want to hear a clear answer!');
+				handleWrongAnswer();
+			}
 		}
 	};
 
 	const resetLevels = () => {
+		setDynamicPrompt(null);
 		setOffset({ x: 0, y: 0 }); // level 2
 		ronaldoWritten.current = false; // level 5
 		messiWritten.current = false; // level 5
 		Fcounter = 0; // level 7
 		wasLevel8MessageDisplayed = false; // level 8
+		wasL11QuestionAsked = false; // level 11
+		LEVELS[10].isLevelPassed = false; // level 11
 	};
 
 	const copyScore = () => {
@@ -466,11 +503,15 @@ export default function Just5MoreMinutes() {
 		// Visual indication of failure
 		setL9ClockState((prev) => ({ ...prev, status: 'miss' }));
 
+		handleWrongAnswer();
+
+		setTimeout(spawnClock, 300);
+	};
+
+	const handleWrongAnswer = () => {
 		startTime.current -= (wrongAnswerPenalty / 100) * roundDuration; // Penalty (+wrongAnswerPenalty% noise)
 		setFlashError(true);
 		setTimeout(() => setFlashError(false), 200);
-
-		setTimeout(spawnClock, 300);
 	};
 
 	// --- RENDER HELPERS ---
