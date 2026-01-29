@@ -125,9 +125,9 @@ const LEVELS = [
 	},
 	{
 		id: 12,
-		prompt: "I CAN'T HEAR YOU! (Scream 'STOP')",
-		placeholder: 'USE CAPS LOCK',
-		validate: (input) => input.trim() === 'STOP', // Case sensitive check
+		prompt: 'What is the 21st digit of Pi after the decimal point?',
+		placeholder: '',
+		validate: (input) => input.trim().toLowerCase() === '2', // Case sensitive check
 		showInput: true,
 	},
 	{
@@ -337,7 +337,7 @@ export default function Just5MoreMinutes() {
 	// Handlers
 	const startGame = () => {
 		resetLevels();
-		setLevelIndex(10);
+		setLevelIndex(0);
 		setNoise(0);
 		setInputVal('');
 		setGameState('playing');
